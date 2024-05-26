@@ -15,22 +15,25 @@ void CheckActions() {
 };
 
     var start = new State();
-    Console.WriteLine(start.ToString());
-    Console.WriteLine();
+    Console.WriteLine(start);
+    Console.WriteLine(start.DoAction(actions));
 
-    foreach (Game.Action action in actions)
-    {
-        start = start.DoAction(action) ?? start;
-        Console.WriteLine(start.ToString());
-        Console.WriteLine();
-    }
+    // Console.WriteLine(start.ToString());
+    // Console.WriteLine();
 
+    // foreach (Game.Action action in actions)
+    // {
+    //     start = start.DoAction(action);
+    //     Console.WriteLine(start.ToString());
+    //     Console.WriteLine();
+    // }
 }
 
 void CheckRL() {
-    QLearn rl = new QLearn(0.001, 0.9, 0.1, Enumerable.Repeat<double>(0, Globals.SIZE + 8).ToArray(), 20);
+    QLearn rl = new QLearn(0.001, 0.9, 0.1, 25);
 
-    rl.Train(1_000_000);
+
+    rl.Train(100_000);
 
     for (var i  = 0; i < 3; ++i) {
         Console.WriteLine("Starting Episode");
@@ -39,4 +42,5 @@ void CheckRL() {
     Console.WriteLine(rl.Serialize());
 }
 
+// CheckActions();
 CheckRL();

@@ -5,9 +5,9 @@ namespace Game;
 public static class Globals
 {
     // note: changing the statics requires changing To2D
-    public static int NUM_ROWS = 6;
-    public static int NUM_COLS = 4;
-    public static int SIZE = NUM_ROWS * NUM_COLS;
+    public static readonly int NUM_ROWS = 6;
+    public static readonly int NUM_COLS = 4;
+    public static readonly int SIZE = NUM_ROWS * NUM_COLS;
 }
 
 public enum Action
@@ -19,9 +19,9 @@ public enum Action
 public record State(bool[] Board, int PieceType, int PieceRow, int PieceCol)
 {
     #region StaticMembers
-    public static int SpawnRow = 4;
-    public static int SpawnCol = 2;
-    static int[,,] RelPieceIndex = {
+    public static readonly int SpawnRow = 4;
+    public static readonly int SpawnCol = 2;
+    static readonly int[,,] RelPieceIndex = {
             { {-1, 0}, {0, 0}, {1, 0}},
             { {0, -1}, {0 ,0}, {0, 1}},
             { {0, 0}, {0, 1}, {1, 0}},
@@ -48,23 +48,23 @@ public record State(bool[] Board, int PieceType, int PieceRow, int PieceCol)
 
     #region FieldHelpers
     public State(State state, int dR, int dC) : this(state.Board, state.PieceType, state.PieceRow + dR, state.PieceCol + dC) { }
-    public State() : this(new bool[Globals.SIZE], (new Random()).Next(0, 6), SpawnRow, SpawnCol) {}
+    public State() : this(new bool[Globals.SIZE], new Random().Next(0, 6), SpawnRow, SpawnCol) {}
     public override string ToString()
     {
-        (int, int)[] pos = {
+        (int, int)[] pos = [
             (RelPieceIndex[PieceType, 0, 0], RelPieceIndex[PieceType, 0, 1]),
             (RelPieceIndex[PieceType, 1, 0], RelPieceIndex[PieceType, 1, 1]),
             (RelPieceIndex[PieceType, 2, 0], RelPieceIndex[PieceType, 2, 1])
-        };
+        ];
 
-        StringBuilder sb = new StringBuilder(Globals.SIZE + Globals.NUM_ROWS);
+        StringBuilder sb = new(Globals.SIZE + Globals.NUM_ROWS);
         for (var r = Globals.NUM_ROWS - 1; r >= 0; --r) {
             for (var c = 0; c < Globals.NUM_COLS; ++c) {
-                if (pos.Any(m => m == (r - PieceRow, c - PieceCol)))
+                if (IndexBoard(r, c) ?? true)
+                    sb.Append("■ ");
+                else if (pos.Any(m => m == (r - PieceRow, c - PieceCol)))
                     sb.Append("x ");
                 //     sb.Append("□ ");
-                else if (IndexBoard(r, c) ?? true)
-                    sb.Append("■ ");
                 else
                     sb.Append("- ");
                 //     sb.Append("⬚ ");
@@ -75,14 +75,20 @@ public record State(bool[] Board, int PieceType, int PieceRow, int PieceCol)
         return sb.ToString();
 
     }
-    bool? IndexBoard(int row, int col) => 
-        (row < 0 || row >= Globals.NUM_ROWS || col < 0 || col >= Globals.NUM_COLS) 
+    bool? IndexBoard(int row, int col)
+    {
+        return (row < 0 || row >= Globals.NUM_ROWS || col < 0 || col >= Globals.NUM_COLS)
         ? null : Board[row * Globals.NUM_COLS + col];
+    }
 
-    static bool[] From2D(bool[][] board) => board.SelectMany(i => i).ToArray<bool>();
+    static bool[] From2D(bool[][] board)
+    {
+        return board.SelectMany(i => i).ToArray();
+    }
 
-    static bool[][] To2D(bool[] board) => 
-    [
+    static bool[][] To2D(bool[] board)
+    {
+        return [
         [board[0], board[1], board[2], board[3]],
         [board[4], board[5], board[6], board[7]],
         [board[8], board[9], board[10], board[11]],
@@ -92,6 +98,7 @@ public record State(bool[] Board, int PieceType, int PieceRow, int PieceCol)
         // [board[24], board[25], board[26], board[27]],
         // [board[28], board[29], board[30], board[31]],
     ];
+    }
 
     static void ShiftDown(bool[][] board, int row) {
         for (var r = row; r < Globals.NUM_ROWS - 1; ++r)
@@ -104,11 +111,14 @@ public record State(bool[] Board, int PieceType, int PieceRow, int PieceCol)
         }
     }
 
-    static bool FullRow(bool[][] board, int row) => board[row].All(m => m);
+    static bool FullRow(bool[][] board, int row)
+    {
+        return board[row].All(m => m);
+    }
 
     public double[] FeatureVector()
     {
-        double[] ret = new double[Globals.SIZE + 8];
+        double[] ret = new double[Globals.SIZE + 6];
 
         // Globals.SIZE len board bitvector
         for (var i = 0; i < Globals.SIZE; ++i)
@@ -117,24 +127,29 @@ public record State(bool[] Board, int PieceType, int PieceRow, int PieceCol)
         // 6 len piece bitvector
         ret[Globals.SIZE + PieceType] = 1;
 
-        // 2 len row/col
-        ret[Globals.SIZE + 6] = PieceRow;
-        ret[Globals.SIZE + 7] = PieceCol;
-
         return ret;
     }
     #endregion
 
     #region Actions
-    bool InvalidMove(int dR, int dC) =>
-        (IndexBoard(RelPieceIndex[PieceType, 0, 0] + PieceRow + dR, RelPieceIndex[PieceType, 0, 1] + PieceCol + dC) ?? true) ||
+    bool InvalidMove(int dR, int dC)
+    {
+        return (IndexBoard(RelPieceIndex[PieceType, 0, 0] + PieceRow + dR, RelPieceIndex[PieceType, 0, 1] + PieceCol + dC) ?? true) ||
         (IndexBoard(RelPieceIndex[PieceType, 1, 0] + PieceRow + dR, RelPieceIndex[PieceType, 1, 1] + PieceCol + dC) ?? true) ||
         (IndexBoard(RelPieceIndex[PieceType, 2, 0] + PieceRow + dR, RelPieceIndex[PieceType, 2, 1] + PieceCol + dC) ?? true);
+    }
 
+    State DoLeft()
+    {
+        return !InvalidMove(0, -1) ? new State(this, 0, -1) : this;
+    }
 
-    State? DoLeft() => !InvalidMove(0, -1) ? new State(this, 0, -1) : null;
-    State? DoRight() => !InvalidMove(0, 1) ? new State(this, 0, 1) : null;
-    State? DoDrop()
+    State DoRight()
+    {
+        return !InvalidMove(0, 1) ? new State(this, 0, 1) : this;
+    }
+
+    State DoDrop()
     {
         State cpy = this;
         while (!cpy.InvalidMove(-1, 0))
@@ -154,24 +169,30 @@ public record State(bool[] Board, int PieceType, int PieceRow, int PieceCol)
             }
         }
 
-        State ret = new State(From2D(board), (new Random()).Next(0, 6), SpawnRow, SpawnCol);
-        return (ret.InvalidMove(0, 0)) ? null : ret;
+        return new(From2D(board), new Random().Next(0, 6), SpawnRow, SpawnCol);
     }
 
-    State? DoGravity() => 
-        InvalidMove(-1, 0) ? DoDrop() : new State(this, -1, 0);
+    State DoGravity()
+        => InvalidMove(-1, 0) ? DoDrop() : new State(this, -1, 0);
 
-    public State? DoAction(Action action)
+    public State DoAction(Action action)
     {
-        switch (action)
+        return action switch
         {
-            case Action.Left:
-                return DoLeft()?.DoGravity();
-            case Action.Right:
-                return DoRight()?.DoGravity();
-            default:
-                return DoDrop();
+            Action.Left => DoLeft(),
+            Action.Right => DoRight(),
+            _ => DoDrop(),
+        };
+    }
+
+    public State DoAction(Action[] actions) {
+        // return actions.Aggregate(this, (acc, x) => acc.DoAction(x));
+        var cpy = this;
+        foreach (Action action in actions) {
+            cpy = cpy.DoAction(action);
+            if (cpy.IsTerminal()) break;
         }
+        return cpy;
     }
 
     public bool IsTerminal() => InvalidMove(0, 0);
