@@ -15,7 +15,7 @@ public record QLearn(double alpha, double gamma, double epsilon, double[] w, int
     ];
     static readonly int LoseReward = -10;
     static double Reward(State state, State next) {
-        int [] rewards = [0, 1, 4, 8];
+        int [] rewards = [0, 1, 4, 16];
         int diffPieces = state.Board.Sum(x => x ? 1 : 0) - next.Board.Sum(x => x ? 1 : 0);
         return rewards[(3 + diffPieces) / Globals.NUM_COLS];
     }
@@ -76,10 +76,10 @@ public record QLearn(double alpha, double gamma, double epsilon, double[] w, int
 
     public void Train(int num_iterations)
     {
-        for (var i = 0; i < 10; ++i)
+        for (var i = 0; i < 100; ++i)
         {
-            Console.WriteLine($"{i * 10}% done");
-            for (var j = 0; j < (i + 1) * num_iterations; ++j)
+            Console.WriteLine($"{i}% done");
+            for (var j = 0; j < (i + 1) * num_iterations / 100; ++j)
                 TrainIteration();
         }
         Console.WriteLine("100% done");

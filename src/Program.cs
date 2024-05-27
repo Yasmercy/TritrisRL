@@ -30,10 +30,10 @@ void CheckActions() {
 }
 
 void CheckRL() {
-    QLearn rl = new QLearn(0.001, 0.9, 0.1, 25);
+    QLearn rl = new QLearn(0.001, 0.9, 0.1, 6);
 
 
-    rl.Train(100_000);
+    rl.Train(5_000_000);
 
     for (var i  = 0; i < 3; ++i) {
         Console.WriteLine("Starting Episode");
